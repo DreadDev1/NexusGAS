@@ -1,0 +1,40 @@
+Nexus GAS Game bugs
+
+WBP_AbilitiesContainer Widget Bug
+The Bug. 
+On Event Construct ->
+1. GetOwningPlayerPawn -> GetAbilitySystemComponent -> IsValid
+3. GetOwningPlayerPawn -> WaitGetGameplayEventToActor
+4. On EventRecieved run UpdateAbilitiesBar.
+
+The WBP_Abilitiescontainer in WBP_PlayerHUD does not populate WBP_Ability_Base on Play in Editor.
+Thanks to Claude AI running in the UE 5.8 MCP, it found that the Bug is a race condition in the BeginPlay order, not a tag mismatch. 
+Since the HUD widget isn't created until the controller's BeginPlay resumes a tick later, WaitGameplayEventToActor doesn't start listening until after the pawn has already fired the event. SendGameplayEventToActor isn't a cached/sticky broadcast — if nothing is listening at the moment it fires, the event is just gone. So the EventReceived exec pin never fires because the listener was registered too late, not because the tag or actor reference is wrong (those both look correct — self in the pawn matches GetOwningPlayerPawn in the widget).
+
+The chain of events:
+
+1. BP_NexusPlayer:EventGraph → EventBeginPlay calls GiveAbilities immediately, with no delay: GiveAbilities() → GiveAbility(GA_Dash) → SendGameplayEventToActor(self, "_Nexus.Events.Abilities.Changed")
+2. BP_ThirdPersonPlayerController:EventGraph → EventBeginPlay does DelayUntilNextTick before creating and adding WBP_PlayerHUD to the viewport.
+3. WBP_AbilitiesContainer:EventGraph → EventConstruct is where WaitGameplayEventToActor(GetOwningPlayerPawn, "_Nexus.Events.Abilities.Changed") gets set up.
+
+
+
+To fix here is what I did based on Claude AIs Options to fix it:
+1. Have WBP_AbilitiesContainer's EventConstruct also call UpdateAbilitiesBar once immediately (in addition to binding the wait), so initial population doesn't depend on winning the race — future ability grants still arrive via the event.
+2. Delay GiveAbilities (or just the SendGameplayEventToActor call) in BP_NexusPlayer so it runs after the HUD exists.
+3. Restructure so the HUD is created earlier (e.g., skip the DelayUntilNextTick, or create it before input mapping).
+
+I leaded towards Option 1 as it suggested.
+1. I Call UpdateAbilitiesBar on EventConstruct
+2. GetOwningPlayerPawn -> GetAbilitySystemComponent -> IsValid
+3. GetOwningPlayerPawn -> WaitGetGameplayEventToActor
+4. On EventRecieved run UpdateAbilitiesBar again.
+
+To test this solution, I followed Ali's example in Unreal Engine's Gameplay Ability System — Part 4: UI/Widgets video
+In BP_NexusPlayer after WaitForAttributeChanged off of BeginPlay
+1. Add a Delay, set for 2 seconds.
+2. Call AbilitySystemComponent -> GiveAbility. Set it to Gameplay_Ability_Montage
+3. Call SendGameplayEventToActor Actor reference set to Self.
+4. Add EventTag -> _Nexus.Events.Abilities.Changed.
+
+The WBP_AbilitiesBar is displayed in the WBP_PlayerHUD on Play InEditor and the WBP_AbilitiesBar adds the second ability Gameplay_Ability_Montage to its AbilitiesBar HorizontalBox.
