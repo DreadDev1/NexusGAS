@@ -52,6 +52,11 @@ void ANexus_PlayerCharacter::BeginPlay()
 void ANexus_PlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		GrantAbilities(StartingAbilities);
+	}
 }
 
 void ANexus_PlayerCharacter::OnRep_PlayerState()
