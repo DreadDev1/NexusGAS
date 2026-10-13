@@ -73,4 +73,9 @@ void ANexus_BaseCharacter::SendAbilitiesChangedEvent()
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventData.EventTag, EventData);
 }
+
+void ANexus_BaseCharacter::Server_SendGameplayEventToSelf_Implementation(FGameplayEventData EventData)
+{
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventData.EventTag, EventData);
+}
 #pragma endregion

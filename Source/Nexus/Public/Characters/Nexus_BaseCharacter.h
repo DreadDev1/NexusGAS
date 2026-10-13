@@ -29,6 +29,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "AbilitySystem")
 	void SendAbilitiesChangedEvent();
+	
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "AbilitySystem")
+	void Server_SendGameplayEventToSelf(FGameplayEventData EventData);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Nexus|AbilitySystem")
 	EGameplayEffectReplicationMode ASCReplicationMode = EGameplayEffectReplicationMode::Mixed;
