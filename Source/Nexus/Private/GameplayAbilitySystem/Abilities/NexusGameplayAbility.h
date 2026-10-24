@@ -15,6 +15,9 @@ class NEXUS_API UNexusGameplayAbility : public UGameplayAbility
 	GENERATED_BODY()
 	
 public:
+
+	UNexusGameplayAbility();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	bool ShouldShowInAbilitiesBar = false;
 };
