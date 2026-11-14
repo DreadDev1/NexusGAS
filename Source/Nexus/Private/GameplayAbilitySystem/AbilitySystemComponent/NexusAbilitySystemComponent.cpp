@@ -21,7 +21,7 @@ void UNexusAbilitySystemComponent::OnRep_ActivateAbilities()
 	ANexus_BaseCharacter* Character = Cast<ANexus_BaseCharacter>(GetOwner());
 	if (!Character) return;
 	
-	Character->SendAbilitiesChangedEvent();
+	//Character->SendAbilitiesChangedEvent();
 	
 	bool bAbilitiesChanged = false;
 	if (LastActivatableAbilities.Num() != ActivatableAbilities.Items.Num())
