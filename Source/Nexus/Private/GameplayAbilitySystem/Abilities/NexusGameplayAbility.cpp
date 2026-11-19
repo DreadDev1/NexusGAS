@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NexusGameplayAbility.h"
+#include "Abilities/NexusGameplayAbility.h"
 
 UNexusGameplayAbility::UNexusGameplayAbility()
 {
