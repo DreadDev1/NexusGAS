@@ -37,9 +37,12 @@ void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	{
 		SetHealth(GetHealth());
 		
-		FGameplayTagContainer HitReactionTagContainer;
-		HitReactionTagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("_Nexus.Abilities.HitReaction")));
-		GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(HitReactionTagContainer);
+		if (Data.EffectSpec.Def->GetAssetTags().HasTag(FGameplayTag::RequestGameplayTag("_Nexus.Effects.HitReaction")))
+		{
+			FGameplayTagContainer HitReactionTagContainer;
+			HitReactionTagContainer.AddTag(FGameplayTag::RequestGameplayTag("_Nexus.Abilities.HitReaction"));
+			GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(HitReactionTagContainer);
+		}
 	}
 	if (Data.EvaluatedData.Attribute == GetStaminaAttribute()) { SetStamina(GetStamina()); }
 	
