@@ -48,3 +48,15 @@ void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	
 	
 }
+
+void UBaseAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+	
+	if (Attribute == GetHealthAttribute() && NewValue <= 0.f)
+	{
+		FGameplayTagContainer DeathTagContainer;
+		DeathTagContainer.AddTag(FGameplayTag::RequestGameplayTag("_Nexus.Abilities.Death"));
+		GetOwningAbilitySystemComponent()->TryActivateAbilitiesByTag(DeathTagContainer);
+	}
+}

@@ -52,4 +52,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Nexus|GameplayAbilitySystem|Attributes")
 	class UBaseAttributeSet* BaseAttributeSet;
+	
+	void OnDeadTagChanged(const FGameplayTag CallbackTag, const int32 NewCount);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Nexus|GameplayAbilitySystem|Character|Death")
+	void HandleDeath();
 };

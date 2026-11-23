@@ -2,6 +2,9 @@
 
 
 #include "Characters/Nexus_BaseCharacter.h"
+
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayAbilitySystem/AbilitySystemComponent/NexusAbilitySystemComponent.h"
 #include "GameplayAbilitySystem/Attributes/BaseAttributeSet.h"
 
@@ -21,6 +24,13 @@ ANexus_BaseCharacter::ANexus_BaseCharacter()
 void ANexus_BaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->RegisterGameplayTagEvent(
+			FGameplayTag::RequestGameplayTag(FName("_Nexus.State.Dead")))
+			.AddUObject(this, &ANexus_BaseCharacter::OnDeadTagChanged);
+	}
 }
 
 void ANexus_BaseCharacter::Tick(float DeltaTime)
@@ -79,3 +89,25 @@ void ANexus_BaseCharacter::Server_SendGameplayEventToSelf_Implementation(FGamepl
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventData.EventTag, EventData);
 }
 #pragma endregion
+
+void ANexus_BaseCharacter::HandleDeath_Implementation()
+{
+	if (IsTemplate()) return;
+	
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->DisableMovement();
+	
+	FVector Impulse = GetActorForwardVector() * -10000.f;
+	Impulse.Z = 15000.f;
+	GetMesh()->AddImpulseAtLocation(Impulse, GetActorLocation());
+}
+
+void ANexus_BaseCharacter::OnDeadTagChanged(const FGameplayTag CallbackTag, const int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		HandleDeath();
+	}
+}
