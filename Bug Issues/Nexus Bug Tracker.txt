@@ -38,3 +38,31 @@ In BP_NexusPlayer after WaitForAttributeChanged off of BeginPlay
 4. Add EventTag -> _Nexus.Events.Abilities.Changed.
 
 The WBP_AbilitiesBar is displayed in the WBP_PlayerHUD on Play InEditor and the WBP_AbilitiesBar adds the second ability Gameplay_Ability_Montage to its AbilitiesBar HorizontalBox.
+
+
+WBP_EnemyHealthBar Widget Bug
+The Bug.
+BP_Nexus_Enemy's HealthBar (WBP_EnemyHealthBar inside WBP_EnemyVitals, shown through the HealthBarWidgetComponent) did not display correctly when the game started in Play in Editor.
+
+The Cause.
+The Attribute pins in WBP_EnemyHealthBar and WBP_EnemyVitals pointed to the wrong attribute set. They used GASToolsetsTestAttributeSet (a test set from the GASToolsets plugin) instead of our own BaseAttributeSet.
+- WBP_EnemyHealthBar: GASToolsetsTestAttributeSet.Health and GASToolsetsTestAttributeSet.MaxHealth (along with one correct BaseAttributeSet.Health)
+- WBP_EnemyVitals: GASToolsetsTestAttributeSet.Health
+The enemy's AbilitySystemComponent only has BaseAttributeSet, so GetFloatAttributeFromAbilitySystemComponent for MaxHealth returned 0 (Successfully Found Attribute = false). Health / MaxHealth then divided by 0, so the ProgressBar Percent came out as 0 (or NaN) and the bar showed up empty.
+Both sets have attributes with the same names (Health, MaxHealth) in the Attribute dropdown, which is why this was easy to miss.
+
+To fix here is what I did:
+1. Opened WBP_EnemyHealthBar and WBP_EnemyVitals.
+2. Changed every Attribute pin to BaseAttributeSet -> Health / MaxHealth.
+3. Compiled and saved. The HealthBar now displays correctly on Play in Editor.
+
+Other things Claude AI flagged to keep an eye on (not needed for this fix):
+- OwnerActor on WBP_EnemyHealthBar is not Expose on Spawn. Since it is nested inside WBP_EnemyVitals, its Event Construct can run before OwnerActor is set. If it ever comes up empty, have WBP_EnemyVitals pass its OwnerActor down to the HealthBar and run the HealthBar setup after that (the same kind of timing issue as the WBP_AbilitiesContainer bug).
+- Make sure the HealthBackground / HealthFill brushes have Draw As set to Image (not None).
+- GetOwningPlayerPawn in an enemy's widget returns the PLAYER, not the enemy. That's fine for Distance to Player, but don't use it to get the enemy's AbilitySystemComponent.
+
+Prevention (for another time):
+Rename the UBaseAttributeSet class to UNexusAttributeSet so the dropdown shows NexusAttributeSet.Health next to GASToolsetsTestAttributeSet.Health. Add a CoreRedirect in DefaultEngine.ini so existing assets keep working:
+[CoreRedirects]
++ClassRedirects=(OldName="/Script/Nexus.BaseAttributeSet",NewName="/Script/Nexus.NexusAttributeSet")
+Then rebuild and re-save the assets that use the attributes. Or turn off the GASToolsets plugin if it's only there for testing.
